@@ -45,6 +45,34 @@
     }
   </style>
 
+
+<style>
+#catalogPage { min-height:calc(100vh - 82px); background:#f1f5f9; padding:24px 16px 60px; }
+.catalog-wrap { max-width:1000px; margin:auto; }
+.catalog-top { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+.catalog-title { font-size:26px; font-weight:800; color:#0f172a; }
+.catalog-tabs { display:flex; gap:10px; margin:12px 0 20px; }
+.catalog-tabs button { flex:1; padding:13px; background:white; border:1px solid #cbd5e1; border-radius:12px; font-weight:700; color:#334155; cursor:pointer; }
+.catalog-tabs button.selected { background:#4338ca; color:white; border-color:#4338ca; }
+.catalog-panel { background:white; border-radius:16px; padding:20px; border:1px solid #e2e8f0; box-shadow:0 4px 12px #0f172a0a; }
+.catalog-controls { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px; }
+.catalog-controls input { flex:1; min-width:160px; padding:11px; border:1px solid #cbd5e1; border-radius:10px; }
+.catalog-btn { padding:10px 14px; border-radius:10px; background:#4338ca; color:white; font-weight:700; cursor:pointer; border:0; }
+.catalog-btn.secondary { background:#e2e8f0; color:#0f172a; }
+.catalog-btn.danger { background:#b91c1c; }
+.catalog-btn:disabled { opacity:.5; cursor:not-allowed; }
+.catalog-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 6px; border-bottom:1px solid #e2e8f0; }
+.catalog-item:last-child { border-bottom:0; }
+.catalog-item-name { font-weight:700; color:#0f172a; overflow-wrap:anywhere; }
+.catalog-item-sub { color:#64748b; font-size:12px; margin-top:3px; }
+.catalog-item-actions { display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; }
+.catalog-item-actions button { border:1px solid #cbd5e1; border-radius:8px; padding:7px 10px; font-size:12px; cursor:pointer; background:#f8fafc; }
+.catalog-item-actions button:hover { background:#e0e7ff; }
+.catalog-edit { margin:18px 0; padding:15px; border:1px solid #c7d2fe; border-radius:12px; background:#eef2ff; }
+.catalog-edit input { width:100%; padding:11px; border:1px solid #a5b4fc; border-radius:9px; margin:10px 0; }
+.catalog-message { margin:10px 0; min-height:20px; color:#334155; font-size:14px; }
+@media(max-width:600px){ .catalog-item {align-items:flex-start; flex-direction:column;} .catalog-item-actions {justify-content:flex-start;} .catalog-title {font-size:22px;} }
+</style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 min-h-screen pb-12">
 
@@ -116,7 +144,7 @@
           <button id="syncCloudBtn" onclick="syncWithCloud()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-1.5 transition shadow cursor-pointer">
             <i class="fa-solid fa-rotate text-sm" id="syncIcon"></i> Sync Cloud
           </button>
-          <button onclick="manageCatalogs()" class="bg-indigo-700 hover:bg-indigo-600 text-white text-xs px-3 py-2 rounded-lg border border-indigo-500 cursor-pointer"><i class="fa-solid fa-gear"></i> Settings</button>
+          <button onclick="openCatalogPage()" class="bg-indigo-700 hover:bg-indigo-600 text-white text-xs px-3 py-2 rounded-lg border border-indigo-500 cursor-pointer"><i class="fa-solid fa-gear"></i> Settings</button>
           <button onclick="exportJSON()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-2 rounded-lg flex items-center gap-1 border border-slate-700 cursor-pointer">
             <i class="fa-solid fa-download"></i> Backup
           </button>
@@ -127,8 +155,37 @@
       </div>
     </header>
 
+
+  <section id="catalogPage" class="hidden" aria-label="Administración de categorías y Stores">
+    <div class="catalog-wrap">
+      <div class="catalog-top">
+        <div><h2 class="catalog-title">Administración</h2><p style="color:#64748b">Organiza tus Stores y Categorías sin utilizar códigos numéricos.</p></div>
+        <button class="catalog-btn secondary" onclick="closeCatalogPage()">← Volver al inicio</button>
+      </div>
+      <div class="catalog-tabs">
+        <button id="catalogTabStore" onclick="switchCatalog('store')">🏬 Stores</button>
+        <button id="catalogTabCategory" onclick="switchCatalog('category')">🏷️ Categorías</button>
+      </div>
+      <div class="catalog-panel">
+        <div class="catalog-controls">
+          <input id="catalogSearch" placeholder="Buscar por nombre..." oninput="renderCatalogPage()" aria-label="Buscar registros">
+          <button class="catalog-btn" onclick="startCatalogCreate()">+ Agregar nuevo</button>
+        </div>
+        <div id="catalogEditor" class="catalog-edit hidden">
+          <strong id="catalogEditorTitle">Nuevo registro</strong>
+          <input id="catalogNameInput" maxlength="120" placeholder="Nombre" aria-label="Nombre del registro">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button id="catalogSaveButton" class="catalog-btn" onclick="saveCatalogFromPage()">Guardar</button>
+            <button class="catalog-btn secondary" onclick="cancelCatalogEdit()">Cancelar</button>
+          </div>
+        </div>
+        <div id="catalogMessage" class="catalog-message" role="status"></div>
+        <div id="catalogItems"></div>
+      </div>
+    </div>
+  </section>
     <!-- Main Container -->
-    <main class="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <main id="dashboardPage" class="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
       <!-- LEFT COLUMN: Forms & Balances (4 cols) -->
       <div class="lg:col-span-4 space-y-6">
@@ -174,7 +231,7 @@
             <div>
               <div class="flex justify-between items-center mb-1">
                 <label class="text-xs font-medium text-slate-600">Store / Place of Purchase</label>
-                <button type="button" onclick="promptNewStore()" class="text-[11px] text-indigo-600 hover:underline flex items-center gap-0.5 cursor-pointer">+ Add Store</button>
+                <button type="button" onclick="openCatalogPage('store', true)" class="text-[11px] text-indigo-600 hover:underline flex items-center gap-0.5 cursor-pointer">+ Add Store</button>
               </div>
               <select id="expStore" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">Select store...</option>
@@ -185,7 +242,7 @@
             <div>
               <div class="flex justify-between items-center mb-1">
                 <label class="text-xs font-medium text-slate-600">Category *</label>
-                <button type="button" onclick="promptNewCategory()" class="text-[11px] text-indigo-600 hover:underline flex items-center gap-0.5 cursor-pointer">+ Add Category</button>
+                <button type="button" onclick="openCatalogPage('category', true)" class="text-[11px] text-indigo-600 hover:underline flex items-center gap-0.5 cursor-pointer">+ Add Category</button>
               </div>
               <select id="expCategory" required class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <option value="">Select category...</option>
@@ -513,6 +570,7 @@
       if (mApp) mApp.classList.remove('hidden');
 
       loadLocalDropdowns();
+      closeCatalogPage();
       syncWithCloud();
     }
 
@@ -523,6 +581,7 @@
       const lScreen = document.getElementById('loginScreen');
       const mApp = document.getElementById('mainApp');
       if (mApp) mApp.classList.add('hidden');
+      document.getElementById('catalogPage').classList.add('hidden');
       if (lScreen) lScreen.classList.remove('hidden');
     }
 
@@ -554,39 +613,121 @@
       await new Promise(resolve => setTimeout(resolve, 700));
       await syncWithCloud();
     }
-    async function manageCatalogs() {
-      const choice = prompt('Settings\n1 = Manage categories\n2 = Manage stores');
-      if (choice === '1') await manageOneCatalog('category');
-      if (choice === '2') await manageOneCatalog('store');
+    let catalogType = 'store';
+    let editingCatalogId = null;
+    let catalogBusy = false;
+    function openCatalogPage(type = 'store', create = false) {
+      catalogType = type;
+      document.getElementById('dashboardPage').classList.add('hidden');
+      document.getElementById('catalogPage').classList.remove('hidden');
+      cancelCatalogEdit();
+      document.getElementById('catalogSearch').value = '';
+      renderCatalogPage();
+      if (create) startCatalogCreate();
+      window.scrollTo(0, 0);
     }
-    async function manageOneCatalog(type) {
-      const list = type === 'category' ? categories : stores;
-      const label = type === 'category' ? 'category' : 'store';
-      const menu = list.map(x => `${x.id}: ${x.name}${x.active === false ? ' [INACTIVE]' : ''}`).join('\n');
-      const action = prompt(`Manage ${label}s\n1 = Add\n2 = Edit name\n3 = Deactivate / delete\n4 = Reactivate\n\n${menu}`);
-      if (action === '1') {
-        const name = prompt(`New ${label} name:`); if (!name || !name.trim()) return;
-        await apiPost({action:'saveCatalog',type,item:{name:name.trim(),active:true}});
-      } else if (['2','3','4'].includes(action)) {
-        const id = Number(prompt(`Enter the ID of the ${label}:\n${menu}`));
-        const item = list.find(x => x.id === id); if (!item) return alert('Invalid ID.');
-        if (action === '2') {
-          const name = prompt('New name:', item.name); if (!name || !name.trim()) return;
-          await apiPost({action:'saveCatalog',type,item:{id:item.id,name:name.trim(),active:item.active !== false}});
-        } else if (action === '4') {
-          await apiPost({action:'saveCatalog',type,item:{id:item.id,name:item.name,active:true}});
-        } else {
-          const count = expenses.filter(e => String(type === 'category' ? e.category : e.store).toLowerCase() === item.name.toLowerCase()).length;
-          const warning = count > 0
-            ? `${item.name} tiene ${count} movimiento(s). No se borrará: se desactivará y los registros anteriores conservarán el nombre. ¿Continuar?`
-            : `${item.name} no tiene movimientos asociados. ¿Eliminarlo?`;
-          if (confirm(warning)) await apiPost({action:'deleteCatalog',type,id:item.id});
+    function closeCatalogPage() {
+      if (catalogBusy) return;
+      document.getElementById('catalogPage').classList.add('hidden');
+      document.getElementById('dashboardPage').classList.remove('hidden');
+      window.scrollTo(0, 0);
+    }
+    function switchCatalog(type) {
+      catalogType = type;
+      document.getElementById('catalogSearch').value = '';
+      cancelCatalogEdit();
+      renderCatalogPage();
+    }
+    function catalogList() { return catalogType === 'store' ? stores : categories; }
+    function catalogUsage(item) {
+      return expenses.filter(e => String(catalogType === 'store' ? e.store : e.category).trim().toLowerCase() === String(item.name).trim().toLowerCase()).length;
+    }
+    function catalogNotice(message) { document.getElementById('catalogMessage').textContent = message; }
+    function renderCatalogPage() {
+      document.getElementById('catalogTabStore').classList.toggle('selected', catalogType === 'store');
+      document.getElementById('catalogTabCategory').classList.toggle('selected', catalogType === 'category');
+      const query = document.getElementById('catalogSearch').value.trim().toLowerCase();
+      const list = catalogList().filter(x => String(x.name).toLowerCase().includes(query)).sort((a,b) => String(a.name).localeCompare(String(b.name)));
+      const target = document.getElementById('catalogItems');
+      target.replaceChildren();
+      if (!list.length) { target.textContent = 'No hay registros que coincidan con la búsqueda.'; return; }
+      list.forEach(item => {
+        const row = document.createElement('div'); row.className = 'catalog-item';
+        const info = document.createElement('div');
+        const name = document.createElement('div'); name.className = 'catalog-item-name'; name.textContent = item.name;
+        const sub = document.createElement('div'); sub.className = 'catalog-item-sub';
+        const count = catalogUsage(item);
+        sub.textContent = (item.active === false ? 'Inactivo' : 'Activo') + ' · ' + count + ' movimiento(s)';
+        info.append(name,sub);
+        const actions = document.createElement('div'); actions.className = 'catalog-item-actions';
+        const edit = document.createElement('button'); edit.textContent = '✎ Editar'; edit.disabled = catalogBusy; edit.onclick = () => startCatalogEdit(item.id);
+        actions.append(edit);
+        const toggle = document.createElement('button'); toggle.textContent = item.active === false ? '✓ Activar' : '⏸ Desactivar'; toggle.disabled = catalogBusy;
+        toggle.onclick = () => setCatalogActive(item, item.active === false);
+        actions.append(toggle);
+        if (item.active !== false && count === 0) {
+          const del = document.createElement('button'); del.textContent = '🗑 Eliminar'; del.disabled = catalogBusy;
+          del.onclick = () => removeCatalogItem(item); actions.append(del);
         }
-      }
+        row.append(info,actions); target.append(row);
+      });
     }
-
-    function promptNewStore() { manageOneCatalog('store'); }
-    function promptNewCategory() { manageOneCatalog('category'); }
+    function startCatalogCreate() {
+      editingCatalogId = null;
+      document.getElementById('catalogEditorTitle').textContent = 'Agregar ' + (catalogType === 'store' ? 'Store' : 'Categoría');
+      document.getElementById('catalogNameInput').value = '';
+      document.getElementById('catalogEditor').classList.remove('hidden');
+      document.getElementById('catalogNameInput').focus();
+    }
+    function startCatalogEdit(id) {
+      const item = catalogList().find(x => String(x.id) === String(id)); if (!item) return;
+      editingCatalogId = item.id;
+      document.getElementById('catalogEditorTitle').textContent = 'Editar: ' + item.name;
+      document.getElementById('catalogNameInput').value = item.name;
+      document.getElementById('catalogEditor').classList.remove('hidden');
+      document.getElementById('catalogNameInput').focus();
+    }
+    function cancelCatalogEdit() {
+      editingCatalogId = null;
+      document.getElementById('catalogEditor').classList.add('hidden');
+    }
+    async function catalogWrite(payload, check) {
+      if (catalogBusy) return;
+      catalogBusy = true;
+      catalogNotice('Guardando y verificando con Google Sheets...');
+      renderCatalogPage();
+      try {
+        await apiPost(payload);
+        if (!check()) throw new Error('No se pudo verificar el cambio en Google Sheets. Sincroniza antes de reintentar.');
+        catalogNotice('Cambio confirmado en Google Sheets.');
+        cancelCatalogEdit();
+      } catch(e) { catalogNotice('Error: ' + e.message); }
+      finally { catalogBusy = false; renderCatalogPage(); }
+    }
+    function saveCatalogFromPage() {
+      const type = catalogType;
+      const name = document.getElementById('catalogNameInput').value.trim();
+      const id = editingCatalogId;
+      if (!name) return catalogNotice('Escribe un nombre.');
+      if (catalogList().some(x => x.name.trim().toLowerCase() === name.toLowerCase() && String(x.id) !== String(id))) return catalogNotice('Ya existe un registro con ese nombre.');
+      const original = catalogList().find(x => String(x.id) === String(id));
+      const item = {name,active:original ? original.active !== false : true};
+      if (id != null) item.id = id;
+      catalogWrite({action:'saveCatalog',type,item}, () => (type === 'store' ? stores : categories).some(x => String(x.name).trim() === name && (id == null || String(x.id) === String(id))));
+    }
+    function setCatalogActive(item, active) {
+      const type = catalogType;
+      const count = catalogUsage(item);
+      if (!active && count && !confirm(item.name + ' tiene ' + count + ' movimientos. Se desactivará, pero conservará su historial. ¿Continuar?')) return;
+      catalogWrite({action:'saveCatalog',type,item:{id:item.id,name:item.name,active}}, () => (type === 'store' ? stores : categories).some(x => String(x.id) === String(item.id) && (x.active !== false) === active));
+    }
+    function removeCatalogItem(item) {
+      const type = catalogType;
+      const count = catalogUsage(item);
+      if (count) return catalogNotice('Tiene movimientos asociados: desactívalo en lugar de eliminarlo.');
+      if (!confirm('¿Eliminar definitivamente ' + item.name + '? Esta acción no se puede deshacer.')) return;
+      catalogWrite({action:'deleteCatalog',type,id:item.id}, () => !(type === 'store' ? stores : categories).some(x => String(x.id) === String(item.id)));
+    }
 
     function parseExpenseDate(dateVal) {
       if (!dateVal) return null;
@@ -638,6 +779,7 @@
           categories = data.categories || categories;
           stores = data.stores || stores;
           renderDropdowns();
+          if (!document.getElementById('catalogPage').classList.contains('hidden')) renderCatalogPage();
         }
         localStorage.setItem('da_expenses', JSON.stringify(expenses));
         localStorage.setItem('da_categories', JSON.stringify(categories));
